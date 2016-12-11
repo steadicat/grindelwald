@@ -1,4 +1,5 @@
-Grindelwald
+
+Grindelwald [![Build Status](https://travis-ci.org/steadicat/grindelwald.svg?branch=master)](https://travis-ci.org/steadicat/grindelwald) [![NPM](https://img.shields.io/npm/v/grindelwald.svg)](https://www.npmjs.com/package/grindelwald)
 ===========
 
 > Functional reactive programming with dark magic.
