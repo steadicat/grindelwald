@@ -44,7 +44,7 @@ a.invalidate();
 
 // runs a()
 a() // => 6
-// runs b(), and c()
+// runs b(), c(), and e()
 e() // => 20
 // runs d()
 d() // => 40
@@ -62,4 +62,18 @@ d() // => 40
 e() // => 20
 f(2) // => 40
 f(4) // => 60
+
+// Now we have a subscriber in the system, updates are no longer lazy
+e.subscribe(console.log);
+
+start = 10;
+// runs a(), b(), c()... then stops because c()'s value hasn't changed
+a.invalidate();
+
+start = 0;
+// runs a(), b(), c(), and e()
+// d() is skipped because the listener does not depend on it
+a.invalidate();
 ```
+
+Check the source for advanced features, like automatically subscribing and unsubscribing your own functions and components based on which reactive functions they call!

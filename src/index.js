@@ -1,8 +1,6 @@
 // @flow
 
-const called = {};
-const stack = [];
-const vide = Symbol('void');
+const vide = '__void__';
 
 class KeyNode {
   node: Node;
@@ -16,15 +14,32 @@ class KeyNode {
   update = () => {
     this.node.invalidate(this.key);
   }
+
+  subscribe = listener => {
+    this.node.subscribe(listener, this.key);
+  }
+
+  unsubscribe = listener => {
+    this.node.unsubscribe(listener, this.key);
+  }
+
+  invalidate = () => {
+    this.node.invalidate(this.key);
+  }
+
+  hasListeners = () => {
+    return this.node.hasListeners(this.key);
+  }
 }
 
 type Key = string | Symbol;
+type Listener = (() => void) | KeyNode;
 
 class Node {
   id: string;
   fn: Function;
   keyFn: (any[] => Key);
-  listeners: {[key: Key]: Set<() => void>};
+  listeners: {[key: Key]: Set<Listener>};
   keyNodes: {[key: Key]: KeyNode};
   keyArgs: {[key: Key]: any[]};
   lastResults: {[key: Key]: any};
@@ -43,12 +58,12 @@ class Node {
     return this.id;
   }
 
-  subscribe(listener: () => void, key = vide) {
+  subscribe = (listener: Listener, key = vide) => {
     this.listeners[key] || (this.listeners[key] = new Set());
     this.listeners[key].add(listener);
   }
 
-  unsubscribe(listener, key = vide) {
+  unsubscribe = (listener, key = vide) => {
     if (!this.listeners[key]) return;
     this.listeners[key].delete(listener);
   }
@@ -57,22 +72,31 @@ class Node {
     return this.lastResults[key] !== undefined;
   }
 
-  hasListeners(key) {
-    return this.listeners[key] && this.listeners[key].size;
+  hasDependencies(key = vide) {
+    return !!this.listeners[key] && this.listeners[key].size > 0;
+  }
+
+  hasListeners(key = vide) {
+    return this.hasDependencies(key) &&
+      Array.from(this.listeners[key]).some(listener =>
+        listener instanceof KeyNode ? listener.hasListeners() : true
+      );
   }
 
   invalidate = (key = vide) => {
     if (!this.hasListeners(key)) {
       delete this.lastResults[key];
+      this.listeners[key] && Array.from(this.listeners[key]).forEach(listener =>
+        listener instanceof KeyNode ? listener.invalidate() : true);
       return;
     }
 
-    called[this.id] = (called[this.id] || 0) + 1;
     const args = this.keyArgs[key];
     const res = this.fn(...args);
     if (res !== this.lastResults[key]) {
       this.lastResults[key] = res;
-      [...this.listeners[key]].forEach(listener => listener(res));
+      Array.from(this.listeners[key]).forEach(listener =>
+        listener instanceof KeyNode ? listener.update(res) : listener(res));
     }
   }
 
@@ -84,15 +108,15 @@ class Node {
 
   call = (...args: any[]) => {
     const key = this.keyFn(...args);
-    if (stack[0] && newSubscriptions.get(stack[0])) {
-      newSubscriptions.get(stack[0]).add(this.keyNode(key));
+    if (stack[0]) {
+      stack[0].add(this.keyNode(key));
     }
     if (this.isValid(key)) {
       return this.lastResults[key];
     }
-    called[this.id] = (called[this.id] || 0) + 1;
+
     this.keyArgs[key] = args;
-    const res = autosubscribe(this.keyNode(key).update, () => {
+    const res = autosubscribe(this.keyNode(key), () => {
       return this.fn(...args);
     });
     this.lastResults[key] = res;
@@ -106,28 +130,30 @@ export function reactive(fn: Function, keyFn: ?(any[] => Key)) {
   node.call.toString = node.toString;
   node.call.node = node;
   node.call.invalidate = node.invalidate;
+  node.call.subscribe = node.subscribe;
+  node.call.unsubscribe = node.unsubscribe;
   return node.call;
 }
 
-const subscriptions = new Map();
-const newSubscriptions = new Map();
+const stack: Set<KeyNode>[] = [];
+const subscriptions: Map<Listener, Set<KeyNode>> = new Map();
+const newSubscriptions: Map<Listener, Set<KeyNode>> = new Map();
 
-function subtract(a, b) {
-  return [...a].filter(x => !b.has(x));
+function subtract<T>(a: Set<T>, b: Set<T>): T[] {
+  return Array.from(a).filter(x => !b.has(x));
 }
 
-export function autosubscribe(listener, fn) {
+export function autosubscribe<T>(listener: Listener, fn: () => T): T {
   subscriptions.has(listener) || subscriptions.set(listener, new Set());
-  newSubscriptions.has(listener) || newSubscriptions.set(listener, new Set());
-  stack.unshift(listener);
+  const newSubs: Set<KeyNode> = new Set();
+  stack.unshift(newSubs);
   const res = fn();
   stack.shift();
-  const newSubs = newSubscriptions.get(listener);
-  const oldSubs = subscriptions.get(listener);
+  const oldSubs: Set<KeyNode> = subscriptions.get(listener) || new Set();
   const toSubscribe = subtract(newSubs, oldSubs);
   const toUnsubscribe = subtract(oldSubs, newSubs);
-  toSubscribe.forEach(keyNode => keyNode.node.subscribe(listener, keyNode.key));
-  toUnsubscribe.forEach(keyNode => keyNode.node.unsubscribe(listener, keyNode.key));
+  toSubscribe.forEach(keyNode => keyNode.subscribe(listener));
+  toUnsubscribe.forEach(keyNode => keyNode.unsubscribe(listener));
   subscriptions.set(listener, newSubs);
   newSubscriptions.delete(listener);
   return res;
