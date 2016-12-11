@@ -1,6 +1,6 @@
 {
   "name": "grindelwald",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Functional reactive programming with dark magic.",
   "author": "Stefano J. Attardi (http://github.com/steadicat)",
   "main": "index.js",
