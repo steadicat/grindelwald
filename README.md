@@ -4,7 +4,7 @@ Grindelwald [![Build Status](https://travis-ci.org/steadicat/grindelwald.svg?bra
 
 > Functional reactive programming with dark magic.
 
-Grindelwald automatically tracks dependencies between your functions and only performs the minimial amount of computation when updates happen.
+Grindelwald automatically tracks dependencies between your functions and only performs the minimal amount of computation when updates happen.
 
 Grindelwald can replace [RxJS](https://github.com/Reactive-Extensions/RxJS) and [Bacon](https://github.com/baconjs/bacon.js/), except it's a tiny library that lets just write plain JS functions. You don't need to learn a whole new library to perform standard operations.
 
