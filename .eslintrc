@@ -2,6 +2,7 @@
   "parser": "babel-eslint",
   "plugins": [
     "babel",
+    "flowtype",
   ],
   "globals": {
     "process": false,

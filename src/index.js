@@ -2,52 +2,58 @@
 
 const vide = '__void__';
 
+type Key = string | typeof vide;
+type Listener = (() => void) | KeyNode;
+type Fn<A, B, C, D, E, F, R> = (a?: A, b?: B, c?: C, d?: D, e?: E, f?: F) => R;
+type KeyFn<A, B, C, D, E, F> = (a?: A, b?: B, c?: C, d?: D, e?: E, f?: F) => Key;
+
+type ReactiveFunction<A, B, C, D, E, F, R> = Fn<A, B, C, D, E, F, R> & {
+  node: Node<A, B, C, D, E, F, R>,
+  +toString: () => string,
+  update(key?: Key): void,
+  subscribe(Listener, key?: Key): void,
+  unsubscribe(Listener, key?: Key): void,
+};
+
 class KeyNode {
-  node: Node;
+  node: Node<*, *, *, *, *, *, *>;
   key: Key;
 
-  constructor(node, key) {
+  constructor(node: Node<*, *, *, *, *, *, *>, key: Key) {
     this.node = node;
     this.key = key;
   }
 
   update = () => {
-    this.node.invalidate(this.key);
+    this.node.update(this.key);
   }
 
-  subscribe = listener => {
+  subscribe = (listener: Listener) => {
     this.node.subscribe(listener, this.key);
   }
 
-  unsubscribe = listener => {
+  unsubscribe = (listener: Listener) => {
     this.node.unsubscribe(listener, this.key);
   }
 
-  invalidate = () => {
-    this.node.invalidate(this.key);
-  }
-
-  hasListeners = () => {
+  hasListeners = (): boolean => {
     return this.node.hasListeners(this.key);
   }
 }
 
-type Key = string | Symbol;
-type Listener = (() => void) | KeyNode;
-
-class Node {
+class Node<A, B, C, D, E, F, R> {
   id: string;
-  fn: Function;
-  keyFn: (any[] => Key);
+  fn: Fn<A, B, C, D, E, F, R>;
+  keyFn: KeyFn<A, B, C, D, E, F>;
   listeners: {[key: Key]: Set<Listener>};
   keyNodes: {[key: Key]: KeyNode};
-  keyArgs: {[key: Key]: any[]};
-  lastResults: {[key: Key]: any};
+  keyArgs: {[key: Key]: [?A, ?B, ?C, ?D, ?E, ?F]};
+  lastResults: {[key: Key]: R};
 
-  constructor(id, fn, keyFn) {
+  constructor(id: number, fn: Fn<A, B, C, D, E, F, R>, keyFn: KeyFn<A, B, C, D, E, F> = (() => vide)) {
     this.id = `reactive(${id})`;
     this.fn = fn;
-    this.keyFn = keyFn || (() => vide);
+    this.keyFn = keyFn;
     this.keyNodes = {};
     this.keyArgs = {};
     this.lastResults = {};
@@ -63,36 +69,35 @@ class Node {
     this.listeners[key].add(listener);
   }
 
-  unsubscribe = (listener, key = vide) => {
+  unsubscribe = (listener: Listener, key = vide) => {
     if (!this.listeners[key]) return;
     this.listeners[key].delete(listener);
   }
 
-  isValid = key => {
+  isValid = (key: Key) => {
     return this.lastResults[key] !== undefined;
   }
 
-  hasDependencies(key = vide) {
+  hasDependencies(key: Key = vide) {
     return !!this.listeners[key] && this.listeners[key].size > 0;
   }
 
-  hasListeners(key = vide) {
+  hasListeners(key: Key = vide) {
     return this.hasDependencies(key) &&
       Array.from(this.listeners[key]).some(listener =>
         listener instanceof KeyNode ? listener.hasListeners() : true
       );
   }
 
-  invalidate = (key = vide) => {
+  update = (key: Key = vide) => {
     if (!this.hasListeners(key)) {
       delete this.lastResults[key];
       this.listeners[key] && Array.from(this.listeners[key]).forEach(listener =>
-        listener instanceof KeyNode ? listener.invalidate() : true);
+        listener instanceof KeyNode ? listener.update() : true);
       return;
     }
 
-    const args = this.keyArgs[key];
-    const res = this.fn(...args);
+    const res = this.fn.apply(null, this.keyArgs[key]);
     if (res !== this.lastResults[key]) {
       this.lastResults[key] = res;
       Array.from(this.listeners[key]).forEach(listener =>
@@ -100,14 +105,14 @@ class Node {
     }
   }
 
-  keyNode(key) {
+  keyNode(key: Key): KeyNode {
     if (this.keyNodes[key]) return this.keyNodes[key];
     this.keyNodes[key] = new KeyNode(this, key);
     return this.keyNodes[key];
   }
 
-  call = (...args: any[]) => {
-    const key = this.keyFn(...args);
+  call = (a?: A, b?: B, c?: C, d?: D, e?: E, f?: F): R => {
+    const key = this.keyFn(a, b, c, d, e, f);
     if (stack[0]) {
       stack[0].add(this.keyNode(key));
     }
@@ -115,21 +120,22 @@ class Node {
       return this.lastResults[key];
     }
 
-    this.keyArgs[key] = args;
-    const res = autosubscribe(this.keyNode(key), () => {
-      return this.fn(...args);
-    });
+    this.keyArgs[key] = [a, b, c, d, e, f];
+    const res = autosubscribe(this.keyNode(key), () => this.fn(a, b, c, d, e, f));
     this.lastResults[key] = res;
     return res;
   }
 }
 
 let nextID = 0;
-export function reactive(fn: Function, keyFn: ?(any[] => Key)) {
+export function reactive<A, B, C, D, E, F, R>(
+  fn: Fn<A, B, C, D, E, F, R>,
+  keyFn?: KeyFn<A, B, C, D, E, F>,
+): ReactiveFunction<A, B, C, D, E, F, R> {
   const node = new Node(nextID++, fn, keyFn);
   node.call.toString = node.toString;
   node.call.node = node;
-  node.call.invalidate = node.invalidate;
+  node.call.update = node.update;
   node.call.subscribe = node.subscribe;
   node.call.unsubscribe = node.unsubscribe;
   return node.call;

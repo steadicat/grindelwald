@@ -63,11 +63,11 @@ describe('Grindelwald', () => {
     expectCalls([a, b, c, d, e, f], [0, 0, 0, 0, 0, 1]);
   });
 
-  it('is be lazy when invalidating', () => {
+  it('is lazy when invalidating', () => {
     start = 6;
     expect(a.node.hasListeners()).toBe(false);
 
-    a.invalidate();
+    a.update();
     expectCalls([a, b, c, d, e, f], [0, 0, 0, 0, 0, 0]);
   });
 
@@ -94,7 +94,7 @@ describe('Grindelwald', () => {
   it('does not recompute if values don’t change', () => {
     start = 12;
 
-    a.invalidate();
+    a.update();
     expectCalls([a, b, c, d, e, f], [0, 0, 0, 0, 0, 0]);
 
     expect(d()).toBe(40);
@@ -127,12 +127,12 @@ describe('Grindelwald', () => {
     expect(a.node.hasListeners()).toBe(true, 'a should have listeners');
 
     start = 10;
-    a.invalidate();
+    a.update();
     expect(s.calls.length).toBe(0, 'subscriber should not be called if value did’t change');
     expectCalls([a, b, c, d, e, f], [1, 1, 1, 0, 0, 0]);
 
     start = 0;
-    a.invalidate();
+    a.update();
     expect(s.calls.length).toBe(1, 'subscriber should be called if value changed');
     expectCalls([a, b, c, d, e, f], [1, 1, 1, 0, 1, 1]);
 

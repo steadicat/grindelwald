@@ -7,10 +7,10 @@
   "jsnext:main": "index.es.js",
   "scripts": {
     "lint": "eslint src",
-    "build": "ES=true ./node_modules/.bin/rollup -c -f es -o index.es.js && ./node_modules/.bin/rollup index.es.js -c -f umd -n Grindelwald -o index.js",
+    "build": "ES=true ./node_modules/.bin/rollup -c -f es -o index.es.js && ./node_modules/.bin/rollup index.es.js -c -f umd -n Grindelwald -o index.js && cp src/index.js.flow index.js.flow",
     "prepublish": "npm run build",
     "test": "mocha --require babel-register",
-    "test:watch": "npm test -- --watch"
+    "test:watch": "mocha --require babel-register --watch"
   },
   "homepage": "https://github.com/steadicat/grindelwald",
   "repository": {
