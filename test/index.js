@@ -1,4 +1,4 @@
-import {reactive as r} from '../src/index';
+import {reactive as r, autosubscribe} from '../src/index';
 import expect from 'expect';
 /* global describe, it, xit */
 
@@ -23,8 +23,9 @@ const f = reactive(x => e() * x, x => x);
 
 function expectCalls(fs, counts) {
   fs.forEach((f, i) => {
-    expect(f.spy.calls.length).toBe(counts[i], `${i} called ${f.spy.calls.length} times, should have been ${counts[i]}`);
-    f.spy.reset();
+    const spy = f.spy || f;
+    expect(spy.calls.length).toBe(counts[i], `${i} called ${spy.calls.length} times, should have been ${counts[i]}`);
+    spy.reset();
   });
 }
 
@@ -138,10 +139,53 @@ describe('Grindelwald', () => {
 
   });
 
-  xit('supports auto-subscribe', () => {
+  it('supports auto-subscribe', () => {
+    const update = expect.createSpy();
+    const inner = expect.createSpy();
+    autosubscribe(update, () => {
+      inner();
+      return a();
+    });
+    expectCalls([inner, update], [1, 0]);
+
+    a.update();
+    expectCalls([inner, update], [0, 0]);
+
+    start = 123;
+    a.update();
+    expectCalls([inner, update], [0, 1]);
   });
 
-  xit('supports auto-unsubscribe', () => {
+  it('supports auto-unsubscribe', () => {
+    const update = expect.createSpy();
+    const inner = expect.createSpy();
+
+    let callsA = true;
+
+    function onUpdate() {
+      update();
+      myF();
+    }
+
+    const myF = autosubscribe.bind(null, onUpdate, () => {
+      inner();
+      return callsA ? a() : null;
+    });
+
+    myF();
+    expectCalls([inner, update], [1, 0]);
+
+    callsA = false;
+
+    start = 345;
+    a.update();
+    expectCalls([inner, update], [1, 1]);
+
+    // We should be unsubscribed now
+
+    start = 456;
+    a.update();
+    expectCalls([inner, update], [0, 0]);
   });
 
 });
