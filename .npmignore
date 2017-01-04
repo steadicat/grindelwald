@@ -1,5 +1,6 @@
 src
 .eslintrc
 .flowconfig
+.vscode
 yarn.lock
 rollup.config.js
