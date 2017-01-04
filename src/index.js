@@ -11,8 +11,8 @@ type ReactiveFunction<A, B, C, D, E, F, R> = Fn<A, B, C, D, E, F, R> & {
   node: Node<A, B, C, D, E, F, R>,
   +toString: () => string,
   update(key?: Key): void,
-  subscribe(Listener, key?: Key): void,
-  unsubscribe(Listener, key?: Key): void,
+  subscribe(listener: Listener, key?: Key): void,
+  unsubscribe(listener: Listener, key?: Key): void,
 };
 
 class KeyNode {
