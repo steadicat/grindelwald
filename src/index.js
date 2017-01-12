@@ -97,7 +97,7 @@ class Node<A, B, C, D, E, F, R> {
       return;
     }
 
-    const res = this.fn.apply(null, this.keyArgs[key]);
+    const res = autosubscribe(this.keyNode(key), () => this.fn.apply(null, this.keyArgs[key]));
     if (res !== this.lastResults[key]) {
       this.lastResults[key] = res;
       Array.from(this.listeners[key]).forEach(listener =>

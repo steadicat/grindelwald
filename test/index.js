@@ -188,5 +188,31 @@ describe('Grindelwald', () => {
     expectCalls([inner, update], [0, 0]);
   });
 
+  it('supports changing the subscribed keys', () => {
+    let n = 0;
+
+    const a = reactive((key) => key, (key) => key);
+    const b = reactive(() => a(['foo', 'bar', 'baz'][n]));
+    b.subscribe(val => val);
+
+    expect(b()).toBe('foo');
+    expect(a.node.listeners.foo.size).toBe(1);
+    expect(a.node.listeners.bar).toBe(undefined);
+    expect(a.node.listeners.baz).toBe(undefined);
+    expectCalls([a, b], [1, 1]);
+
+    n = 1;
+    b.update();
+    expect(a.node.listeners.foo.size).toBe(0);
+    expect(a.node.listeners.bar.size).toBe(1);
+    expect(a.node.listeners.baz).toBe(undefined);
+    expectCalls([a, b], [1, 1]);
+    expect(b.node.lastResults['__void__']).toBe('bar');
+    expect(b()).toBe('bar');
+
+    n = 2;
+    b.update();
+    expect(b()).toBe('baz');
+  });
 });
 
