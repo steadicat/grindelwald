@@ -6,11 +6,11 @@ Grindelwald [![Build Status](https://travis-ci.org/steadicat/grindelwald.svg?bra
 
 Grindelwald automatically tracks dependencies between your functions and only performs the minimal amount of computation when updates happen.
 
-Grindelwald can replace [RxJS](https://github.com/Reactive-Extensions/RxJS) and [Bacon](https://github.com/baconjs/bacon.js/), except it's a tiny library that lets just write plain JS functions. You don't need to learn a whole new library to perform standard operations.
+Grindelwald can replace [RxJS](https://github.com/Reactive-Extensions/RxJS) and [Bacon](https://github.com/baconjs/bacon.js/), except it's a tiny library that lets you write plain JS functions. You don't need to learn a whole new library to perform standard operations.
 
 Grindelwald is perfect for memoizing functions that compute derived data from your Redux stores, similar to [Reselect](https://github.com/reactjs/reselect).
 
-##Examples
+## Examples
 
 ```js
 import {reactive} from 'grindelwald';
@@ -77,4 +77,4 @@ start = 0;
 a.invalidate();
 ```
 
-Check the source for advanced features, like automatically subscribing and unsubscribing your own functions and components based on which reactive functions they call!
+Check the source for advanced features, like automatically subscribing and unsubscribing your own functions and components based on which reactive functions they call.
