@@ -230,7 +230,7 @@ const getState = reactive(() => store.getState());
 store.subscribe(() => getState.update());
 
 // Create a reactive function for each slice of the store you care about,
-// so any dependencies don't run with something unrelated changes.
+// so any dependencies don't run when something unrelated changes.
 const usersStore = reactive(() => getState().users);
 
 // Compute data in the shape that your components need. You can pass in
