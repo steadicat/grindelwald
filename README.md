@@ -185,6 +185,61 @@ class Thing extends React.Component {
 }
 ```
 
+You can extract this logic into a higher-order component, or – even better – a higher-order function that wraps a render function:
+
+```js
+import {reactive, autosubscribe} from 'grindelwald';
+
+function reactiveComponent(render) {
+  return class ReactiveComponent extends React.Component {
+    componentWillUnmount() {
+      autosubscribe(this.onUpdate, () => {});
+    }
+
+    onUpdate = () => {
+      this.forceUpdate();
+    }
+
+    render() {
+      return autosubscribe(this.onUpdate, () => render(this.props));
+    }
+  };
+}
+
+// This is all it takes to define an efficient component with
+// any number of data dependencies. Pretty neat!
+const Thing = reactiveComponent(props => <div>{c()}</div>);
+```
+
+## Usage with Redux
+
+A great use case for Grindelwald is to compute derived data from your Redux store. Derived data is then only recomputed when needed, preventing unnecessary rerenders of your React components.
+
+```js
+import {reactive} from 'grindelwald';
+import {createStore} from 'redux';
+
+// This is your Redux store.
+const store = createStore(reducers);
+
+// Create a reactive function that simply wraps Redux's getState().
+const getState = reactive(() => store.getState());
+
+// Make sure the function gets invalidated any time the store changes.
+store.subscribe(() => getState.update());
+
+// Create a reactive function for each slice of the store you care about,
+// so any dependencies don't run with something unrelated changes.
+const usersStore = reactive(() => getState().users);
+
+// Compute data in the shape that your components need. You can pass in
+// parameters, perform expensive calculations, or instantiate new objects
+// without worrying about performance or breaking shouldComponentUpdate().
+const userById = selector(id => usersStore()[id], id => id);
+```
+
+Once you have reactive functions that return data in the shape you want it, you can subscribe to them in your React components, as shown in the previous section.
+
 ## API
 
 ### reactive(f: Function, argsToCacheKey?: Function): ReactiveFunction
