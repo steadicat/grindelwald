@@ -99,7 +99,7 @@ In other words, by default a reactive function is *pull*-based: it runs when cal
 
 ```js
 // Now we have a subscriber in the system, updates are no longer lazy.
-e.subscribe(console.log);
+e.subscribe(value => console.log(`Subscriber got: ${value}`));
 
 // Let's trigger another state change.
 start = 10;
@@ -114,6 +114,7 @@ start = 0;
 // with the new return value of e(). d() is skipped because
 // the listener does not depend on it.
 a.update();
+// > Subscriber got: 40
 ```
 
 ## Autosubscribing
