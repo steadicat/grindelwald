@@ -118,7 +118,7 @@ a.update();
 
 ## Autosubscribing
 
-Sometimes we need to subscribe to a bunch of functions and run something when any of them changes. This is common in React, when a component depends on multiple pieces of data, and when any of them changes we need to rerender. Instead of explicitly calling `subscribe()` on any of the functions you depend on, Grindelwald can automatically subscribe for you to any reactive functions you call. Just wrap your code in an `autosubscribe` call:
+Sometimes we need to subscribe to a bunch of functions and run something when any of them changes. This is common in React, when a component depends on multiple pieces of data, and when any of them changes we need to rerender. Instead of explicitly calling `subscribe()` on every function you depend on, Grindelwald can automatically subscribe for you to any reactive functions you call. Just wrap your code in an `autosubscribe` call:
 
 ```js
 import {reactive, autosubscribe} from 'grindelwald';
@@ -131,21 +131,21 @@ const c = reactive(() => b() > 10);
 function onUpdate() { console.log('Something changed'); }
 
 // Automatically subscribes onUpdate() to both a() and b().
-autosubscribe(() => a() * b(), onUpdate);
+autosubscribe(onUpdate, () => a() * b());
 
 // Now we've called b() and c() instead, so onUpdate unsubscribes
 // from a() and subscribes to c()!
-autosubscribe(() => c() ? a() : b(), onUpdate);
+autosubscribe(onUpdate, () => c() ? a() : b());
 
 let state = 6;
 a.update();
 
 // c() is now true, so a() and c() are called: onUpdate unsubscribes
 // from b() and subscribes back to a()!
-autosubscribe(() => c() ? a() : b(), onUpdate);
+autosubscribe(onUpdate, () => c() ? a() : b());
 
 // To unsubscribe from everything, simply call autosubscribe with an empty function:
-autosubscribe(() => {}, onUpdate);
+autosubscribe(onUpdate, () => {});
 ```
 
 ## Usage with React
@@ -163,7 +163,7 @@ const c = reactive(() => b() > 10);
 class Thing extends React.Component {
   componentWillUnmount() {
     // Unsubscribe from everything by calling nothing.
-    autosubscribe(() => {}, this.onUpdate);
+    autosubscribe(this.onUpdate, () => {});
   }
   
   onUpdate = () => {
@@ -173,8 +173,8 @@ class Thing extends React.Component {
   render() {
     // Subscribes to c() (and any of its dependencies). onUpdate() will be called on any change.
     return autosubscribe(
-      () => <div>{c()}</div>,
       this.onUpdate,
+      () => <div>{c()}</div>,
     );
   }
 }
@@ -200,6 +200,6 @@ Subscribes `listener` to a reactive function. Listener will be called with the r
 
 Unsubscribes a function previously subscribed. Make sure you pass in the same function instance as you did to subscribe.
 
-### autosubscribe(f: Function, onUpdate: Function)
+### autosubscribe(onUpdate: Function, f: Function)
 
 Immediately runs `f`, and returns its return value. Also keeps track of any reactive functions `f` calls, and adds `onUpdate` as a subscriber to all of them. On subsequent calls, if the dependencies of `f` change, the subscriptions get updated. Therefore, calling `autosubscribe(() => {}, onUpdate)` unsubscribes `onUpdate` from everything.
