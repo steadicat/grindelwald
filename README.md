@@ -134,11 +134,16 @@ function onUpdate() { console.log('Something changed'); }
 autosubscribe(onUpdate, () => a() * b());
 
 // Now we've called b() and c() instead, so onUpdate unsubscribes
-// from a() and subscribes to c()!
+// from a() and subscribes to c()! 
 autosubscribe(onUpdate, () => c() ? a() : b());
 
 let state = 6;
+
+// Invalidating a() triggers b(), which triggers c().
+// b() and c() are both subscribed to, and since both
+// returned new values, our listener gets called:
 a.update();
+// > Something changed
 
 // c() is now true, so a() and c() are called: onUpdate unsubscribes
 // from b() and subscribes back to a()!
