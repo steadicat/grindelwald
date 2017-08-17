@@ -236,7 +236,7 @@ const usersStore = reactive(() => getState().users);
 // Compute data in the shape that your components need. You can pass in
 // parameters, perform expensive calculations, or instantiate new objects
 // without worrying about performance or breaking shouldComponentUpdate().
-const userById = selector(id => usersStore()[id], id => id);
+const userById = reactive(id => usersStore()[id], id => id);
 ```
 
 Once you have reactive functions that return data in the shape you want it, you can subscribe to them in your React components, as shown in the previous section.
