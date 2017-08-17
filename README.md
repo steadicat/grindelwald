@@ -186,7 +186,7 @@ class Thing extends React.Component {
 
 Returns a reactive version of `f`. It behaves just like `f`, except its results are cached. `f` runs again only if any other reactive functions it calls have run and returned a new value.
 
-If `f` takes any parameters, provide a second argument to `reactive` which combines the arguments into a cache key string, e.g.: ``(arg1, arg2) => `${arg1}-${arg2}` ``.
+If `f` takes any parameters, provide a second argument to `reactive` which combines the arguments into a cache key string, e.g.: ``(arg1, arg2) => `${arg1}-${arg2}` ``. `f` will memoize its results based on the cache key provided. It will run again any time it's passed arguments it has never seen before, or after being invalidated (e.g. by a dependency changing).
 
 ### ReactiveFunction.update()
 
@@ -194,11 +194,11 @@ Invalidates the cache for this reactive function. This is useful to trigger upda
 
 ### ReactiveFunction.subscribe(listener: Function)
 
-Subscribes `listener` to a reactive function. Listener will be called with the return value of the function any time the value changes.
+Subscribes `listener` to a reactive function. `listener` will be called with the return value of the function any time the value changes.
 
 ### ReactiveFunction.unsubscribe(listener: Function)
 
-Unsubscribes a function previously subscribed. Make sure you pass in the same function instance as you did to subscribe.
+Unsubscribes a function previously subscribed. Make sure you pass in the same function instance as you did to `subscribe`.
 
 ### autosubscribe(onUpdate: Function, f: Function)
 
