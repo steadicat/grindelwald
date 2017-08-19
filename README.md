@@ -161,7 +161,7 @@ It's easy to subscribe a React component to a bunch of reactive functions using 
 ```js
 import {reactive, autosubscribe} from 'grindelwald';
 
-let state = 1;
+let start = 1;
 const a = reactive(() => start);
 const b = reactive(() => a() * 2);
 const c = reactive(() => b() > 10);
