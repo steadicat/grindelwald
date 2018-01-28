@@ -13,7 +13,10 @@ export declare namespace Grindelwald {
         private node;
         private key;
         constructor(node: Node<A, B, C, D, E, F, R>, key: Key);
-        update: () => void;
+        update: {
+            (): void;
+            (batchListeners: true): Array<() => void>;
+        };
         subscribe: (listener: Listener) => void;
         unsubscribe: (listener: Listener) => void;
         hasListeners: () => boolean;
@@ -37,7 +40,10 @@ export declare namespace Grindelwald {
         isValid: (key: string) => boolean;
         hasDependencies(key?: Key): boolean;
         hasListeners(key?: Key): boolean;
-        update: (key?: string) => void;
+        update: {
+            (key: Key): void;
+            (key: Key, batchListeners: true): Array<() => void>;
+        };
         keyNode(key: Key): AnyKeyNode;
         call: (a: A, b: B, c: C, d: D, e: E, f: F) => R;
     }

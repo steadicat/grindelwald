@@ -225,4 +225,17 @@ describe('Grindelwald', () => {
     b.update();
     expect(b()).to.equal('baz');
   });
+
+  it('batches updates', () => {
+    const update = sinon.spy();
+
+    a.subscribe(update);
+    b.subscribe(update);
+    d.subscribe(update);
+    expect(update.callCount).to.equal(0);
+
+    start = 0;
+    a.update();
+    expect(update.callCount).to.equal(1);
+  });
 });

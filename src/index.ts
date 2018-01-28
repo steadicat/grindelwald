@@ -22,8 +22,15 @@ export namespace Grindelwald {
       this.key = key;
     }
 
-    update = () => {
-      this.node.update(this.key);
+    update: {
+      (): void;
+      (batchListeners: true): Array<() => void>;
+    } = (batchListeners = false): any => {
+      if (batchListeners) {
+        return this.node.update(this.key, batchListeners);
+      } else {
+        this.node.update(this.key);
+      }
     };
 
     subscribe = (listener: Listener) => {
@@ -93,22 +100,43 @@ export namespace Grindelwald {
       );
     }
 
-    update = (key: Key = vide) => {
+    update: {
+      (key: Key): void;
+      (key: Key, batchListeners: true): Array<() => void>;
+    } = (key = vide, batchListeners = false): any => {
+      const listenersToUpdate = new Set<() => void>();
+
       if (!this.hasListeners(key)) {
         delete this.lastResults[key];
-        this.listeners[key] &&
-          Array.from(this.listeners[key]).forEach(
-            listener => (listener instanceof KeyNode ? listener.update() : true),
-          );
-        return;
+        if (this.listeners[key]) {
+          for (const listener of Array.from(this.listeners[key])) {
+            if (listener instanceof KeyNode) {
+              for (const l of listener.update(true)) {
+                listenersToUpdate.add(l);
+              }
+            }
+          }
+        }
+      } else {
+        const res = autosubscribe(this.keyNode(key), () => this.fn.apply(null, this.keyArgs[key]));
+        if (res !== this.lastResults[key]) {
+          this.lastResults[key] = res;
+          for (const listener of Array.from(this.listeners[key])) {
+            if (listener instanceof KeyNode) {
+              for (const l of listener.update(true)) {
+                listenersToUpdate.add(l);
+              }
+            } else {
+              listenersToUpdate.add(listener);
+            }
+          }
+        }
       }
 
-      const res = autosubscribe(this.keyNode(key), () => this.fn.apply(null, this.keyArgs[key]));
-      if (res !== this.lastResults[key]) {
-        this.lastResults[key] = res;
-        Array.from(this.listeners[key]).forEach(
-          listener => (listener instanceof KeyNode ? listener.update() : listener()),
-        );
+      if (batchListeners) {
+        return Array.from(listenersToUpdate);
+      } else {
+        for (const listener of Array.from(listenersToUpdate)) listener();
       }
     };
 

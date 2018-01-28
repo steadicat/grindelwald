@@ -241,6 +241,70 @@ const userById = reactive(id => usersStore()[id], id => id);
 
 Once you have reactive functions that return data in the shape you want it, you can subscribe to them in your React components, as shown in the previous section.
 
+## Batched updates
+
+If you have a function or component that subscribes to multiple reactive functions, it will be called only once per `update()` call. This is convenient when connecting React components to data stores. When your store changes, a single `update()` call can trigger the recalculation of many reactive functions and in turn multiple components. Grindelwald will batch all those updates together so your components only rerender once per change.
+
+This also means it's an anti-pattern to update multiple reactive functions one after the other, as this might trigger multiple redundant updates:
+
+```js
+import {reactive} from 'grindelwald';
+
+let aState = 123;
+let bState = 456;
+
+const a = reactive(() => aState);
+const b = reactive(() => bState);
+
+aState = 234;
+bState = 345;
+
+// Don't do this
+a.update();
+b.update();
+```
+
+Instead, you can make functions that frequently update together depend on a single function, like this:
+
+```js
+import {reactive} from 'grindelwald';
+
+let aState = 123;
+let bState = 456;
+
+const aAndB = reactive(() => [aState, bState]);
+const a = reactive(() => aAndB()[0]);
+const b = reactive(() => aAndB()[1]);
+
+aState = 234;
+bState = 345;
+
+// Better
+aAndB.update();
+```
+
+In practice, it's more common to have all your app's reactive function stream from a single state object, Redux-style. Just keep in mind that mutation is your enemy when using this pattern.
+
+```js
+import {reactive} from 'grindelwald';
+
+let state = {
+  a: 123,
+  b: 456,
+}
+
+const getState = reactive(() => state);
+const a = reactive(() => state.a);
+const b = reactive(() => state.b);
+
+// Careful not to mutate the state object, otherwise Grindelwald will think nothing's changed and do nothing!
+state = {...state, a: 234};
+state = {...state, b: 345};
+
+// Best!
+getState.update();
+```
+
 ## API
 
 ### `reactive(f: Function, argsToCacheKey?: Function): ReactiveFunction`
