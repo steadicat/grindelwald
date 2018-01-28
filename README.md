@@ -305,6 +305,56 @@ state = {...state, b: 345};
 getState.update();
 ```
 
+## Other Patterns
+
+### Using Grindelwald as an Event Emitter
+
+Collecting subscribers and notifying them of events is a common use case that's a simple subset of what Grindelwald can do. All you need is a reactive function that always changes when you tell it to. An easy way to do that is to return a random number:
+
+```js
+import {reactive} from 'grindelwald';
+
+const f = reactive(() => Math.random());
+
+export function subscribe(listener) {
+  f.subscribe(listener);
+}
+
+export function unsubscribe(listener) {
+  f.unsubscribe(listener);
+}
+
+// When some event happens:
+f.update();
+
+```
+
+### Async-style Reactive Functions
+
+Sometimes you need a reactive function to depend on data that will come from the network. The following pattern triggers a load the first time the data is requested, and returns a loading placeholder until the data is available.
+
+```js
+import {reactive} from 'grindelwald';
+
+const needsLoading  = Symbol('needsLoading');
+const loading  = Symbol('loading');
+
+let slowData = needsLoading;
+
+const getSlowData = reactive(() => {
+  if (slowData == needsLoading) {
+    slowData = loading;
+    fetch('/data')
+      .then(res => {
+        slowData = res.body;
+        getSlowData.update();
+      })
+  }
+  return slowData;
+});
+```
+
+
 ## API
 
 ### `reactive(f: Function, argsToCacheKey?: Function): ReactiveFunction`
