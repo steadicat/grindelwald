@@ -4,13 +4,10 @@
   "description": "Functional reactive programming with dark magic.",
   "author": "Stefano J. Attardi (http://github.com/steadicat)",
   "main": "index.js",
-  "jsnext:main": "index.es.js",
   "scripts": {
-    "lint": "eslint src",
-    "build": "ES=true ./node_modules/.bin/rollup -c -f es -o index.es.js && ./node_modules/.bin/rollup index.es.js -c -f umd -n Grindelwald -o index.js && cp src/index.js.flow index.js.flow",
-    "prepublish": "npm run build",
-    "test": "mocha --require babel-register",
-    "test:watch": "mocha --require babel-register --watch"
+    "build": "tsc",
+    "prepare": "tsc",
+    "test": "mocha -r ts-node/register test/**/*.ts"
   },
   "homepage": "https://github.com/steadicat/grindelwald",
   "repository": {
@@ -36,26 +33,15 @@
     "ddg"
   ],
   "devDependencies": {
-    "babel-core": "^6.20.0",
-    "babel-eslint": "^7.1.1",
-    "babel-plugin-transform-class-properties": "^6.19.0",
-    "babel-preset-env": "^1.0.2",
-    "babel-preset-es2015-rollup": "1.2.0",
-    "babel-preset-react": "^6.16.0",
-    "babel-preset-stage-0": "^6.16.0",
-    "babel-register": "^6.18.0",
-    "eslint": "^3.12.0",
-    "eslint-plugin-babel": "^4.0.0",
-    "expect": "^1.20.2",
-    "flow-bin": "^0.37.0",
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^2.2.47",
+    "@types/sinon": "^4.1.3",
+    "chai": "^4.1.2",
     "mocha": "^3.2.0",
-    "rollup": "^0.36.4",
-    "rollup-plugin-babel": "^2.6.1",
-    "rollup-plugin-commonjs": "^5.0.5",
-    "rollup-plugin-node-resolve": "^2.0.0"
+    "sinon": "^4.2.2",
+    "ts-node": "^4.1.0",
+    "typescript": "^2.6.2"
   },
   "license": "MIT",
-  "dependencies": {
-    "babel-runtime": "^6.20.0"
-  }
+  "dependencies": {}
 }
